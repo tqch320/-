@@ -1161,6 +1161,23 @@
             autoTimer: null,
             currentAudio: null
         };
+
+        // URL Google Apps Script Web App (dari Google Spreadsheet)
+        const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyM8O_IilDRwock9Ffzh314fYTvldfGeeGYTssUFBeVnXbcszgqU4uN_Qt9MQx1n_y_oA/exec';
+
+        async function submitResultToSheet(result) {
+            try {
+                const response = await fetch(GOOGLE_SHEETS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(result),
+                });
+                const data = await response.json();
+                console.log('Spreadsheet response:', data);
+            } catch (e) {
+                console.warn('Gagal mengirim data ke spreadsheet:', e);
+            }
+        }
         
         const TRAVEL_DURATION = 5000; // 5 seconds untuk perjalanan (agar musik bisa dimainkan)
 
@@ -1448,6 +1465,15 @@
         function finish(win) {
             state.active = false;
             const overlay = document.getElementById('end-overlay');
+
+            // Kirim hasil ke Google Spreadsheet (menggunakan Apps Script Web App)
+            submitResultToSheet({
+                nama_peserta: state.playerName,
+                win,
+                lives: state.lives,
+                visited: state.visited.size,
+                finished_at: new Date().toISOString(),
+            });
             
             if (win) {
                 document.getElementById('end-title').innerText = "🏆 MAESTRO NUSANTARA";
