@@ -1165,15 +1165,38 @@
         // URL Google Apps Script Web App (dari Google Spreadsheet)
         const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbxswdb-_keMw7-q1DciElmEvzP2qrD5z6Uy1aHhVlXijSYfF4Pxy2lXBuEcmuJ5zyV77g/exec';
 
-        async function submitResultToSheet(result) {
+        function submitResultToSheet(result) {
             try {
-                const response = await fetch(GOOGLE_SHEETS_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(result),
+                // Mengirim data ke Google Apps Script tanpa terblokir CORS (form POST klasik)
+                const iframeId = 'gs-submit-iframe';
+                let iframe = document.getElementById(iframeId);
+
+                if (!iframe) {
+                    iframe = document.createElement('iframe');
+                    iframe.id = iframeId;
+                    iframe.name = iframeId;
+                    iframe.style.display = 'none';
+                    document.body.appendChild(iframe);
+                }
+
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = GOOGLE_SHEETS_URL;
+                form.target = iframeId;
+
+                Object.entries(result).forEach(([key, value]) => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = key;
+                    input.value = value != null ? value : '';
+                    form.appendChild(input);
                 });
-                const data = await response.json();
-                console.log('Spreadsheet response:', data);
+
+                document.body.appendChild(form);
+                form.submit();
+                form.remove();
+
+                console.log('Data dikirim ke spreadsheet (via form POST).');
             } catch (e) {
                 console.warn('Gagal mengirim data ke spreadsheet:', e);
             }
